@@ -1,53 +1,42 @@
-import './App.css';
-import React, { useState, useEffect } from 'react';
+import "./App.css";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  loadTasks,
+  addTask,
+  deleteTask,
+  startEditing,
+  saveTask,
+  updateCurrentTask,
+} from "./redux/tasksSlice";
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [task, setTask] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentTaskIndex, setCurrentTaskIndex] = useState(null);
+  const { tasks, currentTask, isEditing } = useSelector((state) => state.tasks);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const storedTasks = JSON.parse(localStorage.getItem('tasks'));
+    const storedTasks = JSON.parse(localStorage.getItem("tasks"));
     if (storedTasks) {
-      setTasks(storedTasks);
+      dispatch(loadTasks(storedTasks));
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
   const handleInputChange = (e) => {
-    setTask(e.target.value);
+    dispatch(updateCurrentTask(e.target.value));
   };
 
   const handleAddTask = () => {
-    if (task.trim() !== "") {
-      setTasks([...tasks, task]);
-      setTask("");
+    if (currentTask.trim() !== "") {
+      dispatch(addTask(currentTask));
     }
   };
 
-  const handleDeleteTask = (index) => {
-    const newTasks = tasks.filter((_, i) => i !== index);
-    setTasks(newTasks);
-  };
-
-  const handleEditTask = (index) => {
-    setIsEditing(true);
-    setTask(tasks[index]);
-    setCurrentTaskIndex(index);
-  };
-
   const handleSaveTask = () => {
-    const updatedTasks = tasks.map((t, index) => 
-      index === currentTaskIndex ? task : t
-    );
-    setTasks(updatedTasks);
-    setTask("");
-    setIsEditing(false);
-    setCurrentTaskIndex(null);
+    dispatch(saveTask());
   };
 
   return (
@@ -55,7 +44,7 @@ function App() {
       <h1>To-Do List</h1>
       <input
         type="text"
-        value={task}
+        value={currentTask}
         onChange={handleInputChange}
         placeholder="Yeni bir görev ekle"
       />
@@ -68,8 +57,10 @@ function App() {
         {tasks.map((task, index) => (
           <li key={index}>
             {task}
-            <button onClick={() => handleEditTask(index)}>Düzenle</button>
-            <button onClick={() => handleDeleteTask(index)}>Sil</button>
+            <button onClick={() => dispatch(startEditing(index))}>
+              Düzenle
+            </button>
+            <button onClick={() => dispatch(deleteTask(index))}>Sil</button>
           </li>
         ))}
       </ul>
